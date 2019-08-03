@@ -12,8 +12,8 @@
 # Happy Coding!
 
 service: bucket-antivirus
-app: bucket-antivirus-app
-org: edxxx
+tenant: mentionme
+app: bucket-antivirus
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
@@ -62,19 +62,22 @@ functions:
       AV_DEFINITION_S3_BUCKET: mm-antivirus-definitions
       AV_STATUS_SNS_ARN: arn:aws:sns:eu-west-1:124602426320:mm-antivirus
 
-    events:
-      - s3:
-          bucket: publicassetbucket
-          event: s3:ObjectCreated:*
-      - s3:
-          bucket: privateassetbucket
-          event: s3:ObjectCreated:*
-      - s3:
-          bucket: mm-file-import
-          event: s3:ObjectCreated:*
-      - s3:
-          bucket: mm-sftp-batches
-          event: s3:ObjectCreated:*
+    # Watch out! For this to work, the events must be removed from the S3 buckets first.
+    # You need to visit, for instance: https://s3.console.aws.amazon.com/s3/buckets/mm-sftp-batches/?region=eu-west-1&tab=properties 
+    # and remove the existing notification
+    # events:
+    #   - s3:
+    #       bucket: publicassetbucket
+    #       event: s3:ObjectCreated:*
+    #   - s3:
+    #       bucket: privateassetbucket
+    #       event: s3:ObjectCreated:*
+    #   - s3:
+    #       bucket: mm-file-import
+    #       event: s3:ObjectCreated:*
+    #   - s3:
+    #       bucket: mm-sftp-batches
+    #       event: s3:ObjectCreated:*
 
 
   # This function updates the mm-antivirus-definitions S3 folder with definition
