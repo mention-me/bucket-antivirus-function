@@ -1,0 +1,105 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: bucket-antivirus
+app: bucket-antivirus-app
+org: edxxx
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: python2.7
+
+# you can overwrite defaults here
+  stage: prod
+  region: eu-west-1
+
+  # The IAM roles cover both functions - the update one doesn't actually need SQS
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+        - s3:GetObjectTagging
+        - s3:PutObject
+        - s3:PutObjectTagging
+        - s3:PutObjectVersionTagging
+      Resource: "arn:aws:s3:::*"
+    - Effect: "Allow"
+      Action:
+        - sns:Publish
+      Resource: "arn:aws:sns:eu-west-1:124602426320:mm-antivirus"
+       
+# you can add packaging information here
+package:
+  include:
+    - "*.py"
+    - build/**
+  exclude:
+    - ./env/**
+
+functions:
+  # This function will listen for a message when an S3 file is uploaded to certain
+  # buckets and then scan it.
+  scan:
+    handler: scan.lambda_handler
+    memorySize: 1024
+    timeout: 5
+
+    environment:
+      AV_DEFINITION_S3_BUCKET: mm-antivirus-definitions
+      AV_STATUS_SNS_ARN: arn:aws:sns:eu-west-1:124602426320:mm-antivirus
+
+    events:
+      - s3:
+          bucket: publicassetbucket
+          event: s3:ObjectCreated:*
+      - s3:
+          bucket: privateassetbucket
+          event: s3:ObjectCreated:*
+      - s3:
+          bucket: mm-file-import
+          event: s3:ObjectCreated:*
+      - s3:
+          bucket: mm-sftp-batches
+          event: s3:ObjectCreated:*
+
+
+  # This function updates the mm-antivirus-definitions S3 folder with definition
+  # files which are used by the scan function.
+  update:
+    handler: update.lambda_handler
+    memorySize: 512
+    timeout: 300
+
+    environment:
+      AV_DEFINITION_S3_BUCKET: mm-antivirus-definitions
+
+    events:
+      - schedule: rate(3 hours)
+
+
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
