@@ -116,6 +116,7 @@ def scan_file(path):
             "-v",
             "-a",
             "--stdout",
+            "--alert-macros=yes",
             "-d",
             AV_DEFINITION_PATH,
             path
