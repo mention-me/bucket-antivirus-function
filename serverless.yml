@@ -21,7 +21,7 @@ app: bucket-antivirus
 
 provider:
   name: aws
-  runtime: python2.7
+  runtime: python3.7
 
 # you can overwrite defaults here
   stage: prod
@@ -41,7 +41,7 @@ provider:
       Action:
         - sns:Publish
       Resource: "arn:aws:sns:eu-west-1:124602426320:mm-antivirus"
-       
+
 # you can add packaging information here
 package:
   include:
@@ -63,7 +63,7 @@ functions:
       AV_STATUS_SNS_ARN: arn:aws:sns:eu-west-1:124602426320:mm-antivirus
 
     # Watch out! For this to work, the events must be removed from the S3 buckets first.
-    # You need to visit, for instance: https://s3.console.aws.amazon.com/s3/buckets/mm-sftp-batches/?region=eu-west-1&tab=properties 
+    # You need to visit, for instance: https://s3.console.aws.amazon.com/s3/buckets/mm-sftp-batches/?region=eu-west-1&tab=properties
     # and remove the existing notification
     # events:
     #   - s3:
@@ -84,8 +84,8 @@ functions:
   # files which are used by the scan function.
   update:
     handler: update.lambda_handler
-    memorySize: 512
-    timeout: 300
+    memorySize: 1024
+    timeout: 3000
 
     environment:
       AV_DEFINITION_S3_BUCKET: mm-antivirus-definitions
