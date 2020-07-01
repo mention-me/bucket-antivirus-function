@@ -205,6 +205,6 @@ def scan_file(path):
         signature = summary.get(path, AV_SIGNATURE_UNKNOWN)
         return AV_STATUS_INFECTED, signature
     else:
-        msg = "Unexpected exit code from clamscan: %s.\n" % av_proc.returncode
+        msg = "Unexpected exit code from clamscan for %s: %s.\n" % (path, av_proc.returncode)
         print(msg)
         raise Exception(msg)

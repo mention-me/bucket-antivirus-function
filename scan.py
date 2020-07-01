@@ -20,6 +20,7 @@ from urllib.parse import unquote_plus
 from distutils.util import strtobool
 
 import boto3
+import botocore
 
 import clamav
 import metrics
@@ -221,7 +222,20 @@ def lambda_handler(event, context):
 
     file_path = get_local_path(s3_object, "/tmp")
     create_dir(os.path.dirname(file_path))
-    s3_object.download_file(file_path)
+
+    try:
+        s3_object.download_file(file_path)
+    except botocore.exceptions.ClientError as e:
+        print("Unexpected exception for file %s.\n" % file_path)
+        if s3_object.key.startswith("test"):
+            # I hypothesise that the test bucket has lots of create/delete operations
+            # and the deletes cause this exception to throw. If this is the case, then
+            # we should exit without doing anything.
+            print("Ignoring file in test folder %s.\n" % file_path)
+            return
+        else:
+            # But... if it's not, then we'll throw
+            raise
 
     to_download = clamav.update_defs_from_s3(
         s3_client, AV_DEFINITION_S3_BUCKET, AV_DEFINITION_S3_PREFIX
