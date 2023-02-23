@@ -212,6 +212,13 @@ def lambda_handler(event, context):
     print("Script starting at %s\n" % (start_time))
     s3_object = event_object(event, event_source=EVENT_SOURCE)
 
+    if s3_object.key.endswith("/"):
+        # we often see that creating "directories" with no file data triggers
+        # an error in the lambda, which in turn triggers an alert in cloudwatch.
+        # So if things are created as "directories", we can just skip this scan
+        # and circuit break early.
+        return
+
     if str_to_bool(AV_PROCESS_ORIGINAL_VERSION_ONLY):
         verify_s3_object_version(s3, s3_object)
 
