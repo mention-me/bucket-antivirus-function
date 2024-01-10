@@ -29,7 +29,8 @@ clean:  ## Clean build artifacts
 	rm -rf build/
 	rm -rf tmp/
 	rm -f .coverage
-	find ./ -type d -name '__pycache__' -delete
+	rm -rf .pytest_cache/
+	find ./ -type d -name '__pycache__' -exec rm -r {} \;
 	find ./ -type f -name '*.pyc' -delete
 
 .PHONY: archive
