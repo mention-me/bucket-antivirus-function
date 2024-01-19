@@ -1,6 +1,9 @@
 # boto3 available by default in AWS but not locally
 boto3
 
+# awscli available by default in AWS but not locally
+awscli
+
 # Test requirements
 coverage
 mock==5.1.0

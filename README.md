@@ -198,30 +198,63 @@ pip install -r requirements-dev.txt
 make test
 ```
 
-### Local lambdas
+## Testing with Localstack
 
-You can run the lambdas locally to test out what they are doing without deploying to AWS. This is accomplished
-by using docker containers that act similarly to lambda. You will need to have set up some local variables in your
-`.envrc.local` file and modify them appropriately first before running `direnv allow`. If you do not have `direnv`
-it can be installed with `brew install direnv`.
+You can test the lambda functions locally using [localstack](https://www.localstack.cloud/). This will run the lambda functions in docker containers.
 
-For the Scan lambda you will need a test file uploaded to S3 and the variables `TEST_BUCKET` and `TEST_KEY`
-set in your `.envrc.local` file. Then you can run:
+To get started you will need to install [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/).
+
+Then you can run:
 
 ```sh
-direnv allow
-make archive scan
+make archive
+docker compose up localstack -d # start localstack
+aws s3 mb s3://antivirus-definitions --profile localstack # bucket name must match AV_DEFINITION_S3_BUCKET
+aws s3 mb s3://test-bucket --profile localstack # bucket name must match TEST_BUCKET
+wget https://secure.eicar.org/eicar_com.zip
+aws s3 cp eicar_com.zip s3://test-bucket/eicar_com.zip --profile localstack
+aws --endpoint-url=http://localhost:4566 lambda create-function \
+  --function-name update-clamav \
+  --runtime python3.12 \
+  --handler update.lambda_handler \
+  --role arn:aws:iam::123456789012:role/lambda-role \
+  --zip-file fileb://./build/lambda.zip \
+  --timeout 120 \
+  --profile localstack \
+  --environment "Variables={AV_DEFINITION_S3_BUCKET=antivirus-definitions}"
+aws --endpoint-url=http://localhost:4566 lambda invoke \
+  --function-name update-clamav --profile localstack \
+  --invocation-type RequestResponse \
+  --log-type Tail \
+  --payload '{}' \
+  response.json \
+  --query 'LogResult' | tr -d '"' | base64 -d
+aws --endpoint-url=http://localhost:4566 lambda create-function \
+  --function-name scan-clamav \
+  --runtime python3.12 \
+  --handler scan.lambda_handler \
+  --role arn:aws:iam::123456789012:role/lambda-role \
+  --zip-file fileb://./build/lambda.zip \
+  --timeout 120 \
+  --profile localstack \
+  --environment "Variables={AV_DEFINITION_S3_BUCKET=antivirus-definitions,AV_DELETE_INFECTED_FILES=True}"
+aws --endpoint-url=http://localhost:4566 lambda invoke \
+  --function-name scan-clamav --profile localstack \
+  --invocation-type RequestResponse \
+  --log-type Tail \
+  --payload '{"Records": [{"s3": {"bucket": {"name": "test-bucket"}, "object": {"key": "eicar_com.zip"}}}]}' \
+  response.json \
+  --query 'LogResult' | tr -d '"' | base64 -d
+aws s3 ls s3://test-bucket --profile localstack # should be empty
 ```
 
-If you want a file that will be recognized as a virus you can download a test file from the [EICAR](https://www.eicar.org/?page_id=3950)
-website and uploaded to your bucket.
+Note1: The `--profile localstack` is only needed if you have a profile named `localstack` in your `~/.aws/config` and `~/.aws/credentials` file. See [localstack docs](https://docs.localstack.cloud/user-guide/integrations/aws-cli/#aws-cli) for more info.
 
-For the Update lambda you can run:
+Note2: The `--endpoint-url` is only needed if you are not running localstack on the default port of `4566`.
 
-```sh
-direnv allow
-make archive update
-```
+Note3: The `--query 'LogResult' | tr -d '"' | base64 -d` is only needed if you want to see the logs from the lambda function.
+
+Note4: localstack will drop all file when it is stopped. If you want to keep the files you will need to copy them to a real s3 bucket.
 
 ## License
 
