@@ -120,3 +120,6 @@ tmp/
 
 # response.json
 response.json
+
+# coverage report
+coverage_html_report/

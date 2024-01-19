@@ -6,3 +6,6 @@ omit =
   */python?.?/*
   */site-packages/nose/*
 show_missing = true
+
+[html]
+directory = coverage_html_report
