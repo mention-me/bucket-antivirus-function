@@ -43,7 +43,6 @@
           ServerSideEncryptionConfiguration:
             - ServerSideEncryptionByDefault:
                 SSEAlgorithm: AES256
-        AccessControl: BucketOwnerFullControl
         PublicAccessBlockConfiguration:
           BlockPublicAcls: !If [ publicBucket, false, true ]
           BlockPublicPolicy: !If [ publicBucket, false, true ]
