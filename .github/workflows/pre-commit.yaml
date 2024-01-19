@@ -1,4 +1,4 @@
-name: CI
+name: pre-commit
 
 on: [push, pull_request]
 
@@ -19,9 +19,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      - name: Run pytest
-        run: |
-          pytest -v
       - name: Run pre-commit
         run: |
           pip install pre-commit

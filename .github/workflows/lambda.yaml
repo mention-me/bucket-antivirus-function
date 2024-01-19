@@ -1,0 +1,63 @@
+name: Test with LocalStack
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y make wget
+      - name: build docker image
+        run: make archive
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@main
+        with:
+          image-tag: 'latest'
+          install-awslocal: 'true'
+      - name: Run tests against localstack
+        run: |
+          awslocal s3 mb s3://antivirus-definitions
+          awslocal s3 mb s3://bucket-test
+          wget https://secure.eicar.org/eicar_com.zip
+          awslocal s3 cp eicar_com.zip s3://bucket-test/eicar_com.zip
+          awslocal lambda create-function \
+            --function-name update-clamav \
+            --runtime python3.12 \
+            --handler update.lambda_handler \
+            --role arn:aws:iam::123456789012:role/lambda-role \
+            --zip-file fileb://./build/lambda.zip \
+            --timeout 120 \
+            --environment "Variables={AV_DEFINITION_S3_BUCKET=antivirus-definitions}"
+          sleep 30
+          awslocal lambda invoke \
+            --function-name update-clamav \
+            --invocation-type RequestResponse \
+            --log-type Tail \
+            --payload '{}' \
+            response.json \
+            --query 'LogResult' | tr -d '"' | base64 -d
+          awslocal lambda create-function \
+            --function-name scan-clamav \
+            --runtime python3.12 \
+            --handler scan.lambda_handler \
+            --role arn:aws:iam::123456789012:role/lambda-role \
+            --zip-file fileb://./build/lambda.zip \
+            --timeout 120 \
+            --environment "Variables={AV_DEFINITION_S3_BUCKET=antivirus-definitions,AV_DELETE_INFECTED_FILES=True}"
+          sleep 30
+          awslocal lambda invoke \
+            --function-name scan-clamav \
+            --invocation-type RequestResponse \
+            --log-type Tail \
+            --payload '{"Records": [{"s3": {"bucket": {"name": "test-bucket"}, "object": {"key": "eicar_com.zip"}}}]}' \
+            response.json \
+            --query 'LogResult' | tr -d '"' | base64 -d
+          result=$(awslocal s3 ls s3://test-bucket)
+          if [ -z "$result" ]; then
+            echo "Bucket is empty"
+          else
+            echo "Bucket is not empty"
+            exit 1
+          fi
