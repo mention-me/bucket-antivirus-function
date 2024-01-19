@@ -43,6 +43,9 @@ AV_DELETE_INFECTED_FILES = os.getenv("AV_DELETE_INFECTED_FILES", "False")
 
 AV_DEFINITION_FILE_PREFIXES = ["main", "daily", "bytecode"]
 AV_DEFINITION_FILE_SUFFIXES = ["cld", "cvd"]
+SNS_ENDPOINT = os.getenv("SNS_ENDPOINT", None)
+S3_ENDPOINT = os.getenv("S3_ENDPOINT", None)
+LAMBDA_ENDPOINT = os.getenv("LAMBDA_ENDPOINT", None)
 
 
 def create_dir(path):
@@ -56,4 +59,4 @@ def create_dir(path):
 
 
 def get_timestamp():
-    return datetime.datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S UTC")
+    return datetime.datetime.now(datetime.UTC).strftime("%Y/%m/%d %H:%M:%S UTC")

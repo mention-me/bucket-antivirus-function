@@ -29,7 +29,8 @@ clean:  ## Clean build artifacts
 	rm -rf build/
 	rm -rf tmp/
 	rm -f .coverage
-	find ./ -type d -name '__pycache__' -delete
+	rm -rf .pytest_cache/
+	find ./ -type d -name '__pycache__' | xargs rm -rf
 	find ./ -type f -name '*.pyc' -delete
 
 .PHONY: archive
@@ -40,8 +41,8 @@ archive: clean  ## Create the archive for AWS lambda
 
 .PHONY: pre_commit_install  ## Ensure that pre-commit hook is installed and kept up to date
 pre_commit_install: .git/hooks/pre-commit ## Ensure pre-commit is installed
-.git/hooks/pre-commit: /usr/local/bin/pre-commit
-	pip install pre-commit==1.18.3
+.git/hooks/pre-commit: venv ## Ensure venv is created first
+	pip install pre-commit
 	pre-commit install
 	pre-commit install-hooks
 
@@ -51,16 +52,8 @@ pre_commit_tests: ## Run pre-commit tests
 
 .PHONY: test
 test: clean  ## Run python tests
-	nosetests
+	pytest --no-cov
 
 .PHONY: coverage
 coverage: clean  ## Run python tests with coverage
-	nosetests --with-coverage
-
-.PHONY: scan
-scan: ./build/lambda.zip ## Run scan function locally
-	scripts/run-scan-lambda $(TEST_BUCKET) $(TEST_KEY)
-
-.PHONY: update
-update: ./build/lambda.zip ## Run update function locally
-	scripts/run-update-lambda
+	pytest --cov=. --cov-report html

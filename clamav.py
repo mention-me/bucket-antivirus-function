@@ -24,7 +24,7 @@ import boto3
 import botocore
 from pytz import utc
 
-from common import AV_DEFINITION_S3_PREFIX
+from common import AV_DEFINITION_S3_PREFIX, S3_ENDPOINT
 from common import AV_DEFINITION_PATH
 from common import AV_DEFINITION_FILE_PREFIXES
 from common import AV_DEFINITION_FILE_SUFFIXES
@@ -42,7 +42,7 @@ RE_SEARCH_DIR = r"SEARCH_DIR\(\"=([A-z0-9\/\-_]*)\"\)"
 
 
 def current_library_search_path():
-    ld_verbose = subprocess.check_output(["ld", "--verbose"])
+    ld_verbose = subprocess.check_output(["ld", "--verbose"]).decode("utf-8")
     rd_ld = re.compile(RE_SEARCH_DIR)
     return rd_ld.findall(ld_verbose)
 
@@ -90,7 +90,7 @@ def upload_defs_to_s3(s3_client, bucket, prefix, local_path):
                         "Uploading %s to s3://%s"
                         % (local_file_path, os.path.join(bucket, prefix, filename))
                     )
-                    s3 = boto3.resource("s3")
+                    s3 = boto3.resource("s3", endpoint_url=S3_ENDPOINT)
                     s3_object = s3.Object(bucket, os.path.join(prefix, filename))
                     s3_object.upload_file(os.path.join(local_path, filename))
                     s3_client.put_object_tagging(
@@ -112,7 +112,7 @@ def update_defs_from_freshclam(path, library_path=""):
     fc_env = os.environ.copy()
     if library_path:
         fc_env["LD_LIBRARY_PATH"] = "%s:%s" % (
-            ":".join(current_library_search_path()),
+            fc_env["LD_LIBRARY_PATH"],
             CLAMAVLIB_PATH,
         )
     print("Starting freshclam with defs in %s." % path)
@@ -194,7 +194,7 @@ def scan_file(path):
         stdout=subprocess.PIPE,
         env=av_env,
     )
-    output = av_proc.communicate()[0]
+    output = av_proc.communicate()[0].decode()
     print("clamscan output:\n%s" % output)
 
     # Turn the output into a data source we can read
