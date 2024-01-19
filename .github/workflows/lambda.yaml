@@ -1,6 +1,6 @@
 name: Test with LocalStack
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -19,9 +19,9 @@ jobs:
       - name: Run tests against localstack
         run: |
           awslocal s3 mb s3://antivirus-definitions
-          awslocal s3 mb s3://bucket-test
+          awslocal s3 mb s3://test-bucket
           wget https://secure.eicar.org/eicar_com.zip
-          awslocal s3 cp eicar_com.zip s3://bucket-test/eicar_com.zip
+          awslocal s3 cp eicar_com.zip s3://test-bucket/eicar_com.zip
           awslocal lambda create-function \
             --function-name update-clamav \
             --runtime python3.12 \
