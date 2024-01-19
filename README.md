@@ -1,8 +1,8 @@
 # bucket-antivirus-function
 
-[![CircleCI](https://circleci.com/gh/upsidetravel/bucket-antivirus-function.svg?style=svg)](https://circleci.com/gh/upsidetravel/bucket-antivirus-function)
+[![CI](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/ci.yaml/badge.svg)](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/ci.yaml) [![pre-commit](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/pre-commit.yaml/badge.svg)](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/pre-commit.yaml) [![Test with LocalStack](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/lambda.yaml/badge.svg)](https://github.com/Georepublic/bucket-antivirus-function/actions/workflows/lambda.yaml)
 
-Scan new objects added to any s3 bucket using AWS Lambda. [more details in this post](https://engineering.upside.com/s3-antivirus-scanning-with-lambda-and-clamav-7d33f9c5092e)
+Scan new objects added to any s3 bucket using AWS Lambda.
 
 ## Features
 
