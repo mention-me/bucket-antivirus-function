@@ -1,12 +1,13 @@
 FROM amazonlinux:2
 
+
+WORKDIR /opt/app
+
 # Set up working directories
-RUN mkdir -p /opt/app
 RUN mkdir -p /opt/app/build
 RUN mkdir -p /opt/app/bin/
 
 # Copy in the lambda source
-WORKDIR /opt/app
 COPY ./*.py /opt/app/
 COPY requirements.txt /opt/app/requirements.txt
 
