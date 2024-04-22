@@ -117,3 +117,9 @@ tmp/
 
 # EICAR Files
 *eicar*
+
+# response.json
+response.json
+
+# coverage report
+coverage_html_report/

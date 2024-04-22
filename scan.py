@@ -17,7 +17,6 @@ import copy
 import json
 import os
 from urllib.parse import unquote_plus
-from distutils.util import strtobool
 
 import boto3
 import botocore
@@ -38,12 +37,13 @@ from common import AV_STATUS_SNS_ARN
 from common import AV_STATUS_SNS_PUBLISH_CLEAN
 from common import AV_STATUS_SNS_PUBLISH_INFECTED
 from common import AV_TIMESTAMP_METADATA
+from common import SNS_ENDPOINT
+from common import S3_ENDPOINT
 from common import create_dir
 from common import get_timestamp
 
 
 def event_object(event, event_source="s3"):
-
     # SNS events are slightly different
     if event_source.upper() == "SNS":
         event = json.loads(event["Records"][0]["Sns"]["Message"])
@@ -74,7 +74,7 @@ def event_object(event, event_source="s3"):
         raise Exception("Unable to retrieve object from event.\n{}".format(event))
 
     # Create and return the object
-    s3 = boto3.resource("s3")
+    s3 = boto3.resource("s3", endpoint_url=S3_ENDPOINT)
     return s3.Object(bucket_name, key_name)
 
 
@@ -200,9 +200,9 @@ def sns_scan_results(
 
 
 def lambda_handler(event, context):
-    s3 = boto3.resource("s3")
-    s3_client = boto3.client("s3")
-    sns_client = boto3.client("sns")
+    s3 = boto3.resource("s3", endpoint_url=S3_ENDPOINT)
+    s3_client = boto3.client("s3", endpoint_url=S3_ENDPOINT)
+    sns_client = boto3.client("sns", endpoint_url=SNS_ENDPOINT)
 
     # Get some environment variables
     ENV = os.getenv("ENV", "")
@@ -293,3 +293,18 @@ def lambda_handler(event, context):
 
 def str_to_bool(s):
     return bool(strtobool(str(s)))
+
+
+def strtobool(val):
+    """Convert a string representation of truth to true (1) or false (0).
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+    """
+    val = val.lower()
+    if val in ("y", "yes", "t", "true", "on", "1"):
+        return 1
+    elif val in ("n", "no", "f", "false", "off", "0"):
+        return 0
+    else:
+        raise ValueError("invalid truth value %r" % (val,))

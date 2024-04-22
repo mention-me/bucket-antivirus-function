@@ -1,0 +1,29 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+      - name: Create virtualenv
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Run pytest
+        run: |
+          pytest -v
+      - name: Run pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit install-hooks
+          pre-commit run --all-files

@@ -1,7 +1,11 @@
 # boto3 available by default in AWS but not locally
 boto3
 
+# awscli available by default in AWS but not locally
+awscli
+
 # Test requirements
 coverage
-mock==3.0.5
-nose
+mock==5.1.0
+pytest
+pytest-cov
