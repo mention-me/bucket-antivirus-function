@@ -59,4 +59,5 @@ def create_dir(path):
 
 
 def get_timestamp():
-    return datetime.datetime.now(datetime.UTC).strftime("%Y/%m/%d %H:%M:%S UTC")
+    # replace with datetime.utc when upgrading to 3.11
+    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y/%m/%d %H:%M:%S UTC")
