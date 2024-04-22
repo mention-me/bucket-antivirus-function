@@ -189,7 +189,7 @@ def scan_file(path):
     av_env["LD_LIBRARY_PATH"] = CLAMAVLIB_PATH
     print("Starting clamscan of %s." % path)
     av_proc = subprocess.Popen(
-        [CLAMSCAN_PATH, "-v", "-a", "--stdout", "-d", AV_DEFINITION_PATH, path],
+        [CLAMSCAN_PATH, "-v", "-a", "--alert-macros=yes", "--stdout", "-d", AV_DEFINITION_PATH, path],
         stderr=subprocess.STDOUT,
         stdout=subprocess.PIPE,
         env=av_env,
@@ -205,6 +205,6 @@ def scan_file(path):
         signature = summary.get(path, AV_SIGNATURE_UNKNOWN)
         return AV_STATUS_INFECTED, signature
     else:
-        msg = "Unexpected exit code from clamscan: %s.\n" % av_proc.returncode
+        msg = "Unexpected exit code from clamscan for %s: %s.\n" % (path, av_proc.returncode)
         print(msg)
         raise Exception(msg)

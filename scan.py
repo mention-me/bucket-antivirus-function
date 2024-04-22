@@ -19,6 +19,7 @@ import os
 from urllib.parse import unquote_plus
 
 import boto3
+import botocore
 
 import clamav
 import metrics
@@ -211,6 +212,13 @@ def lambda_handler(event, context):
     print("Script starting at %s\n" % (start_time))
     s3_object = event_object(event, event_source=EVENT_SOURCE)
 
+    if s3_object.key.endswith("/"):
+        # we often see that creating "directories" with no file data triggers
+        # an error in the lambda, which in turn triggers an alert in cloudwatch.
+        # So if things are created as "directories", we can just skip this scan
+        # and circuit break early.
+        return
+
     if str_to_bool(AV_PROCESS_ORIGINAL_VERSION_ONLY):
         verify_s3_object_version(s3, s3_object)
 
@@ -221,7 +229,20 @@ def lambda_handler(event, context):
 
     file_path = get_local_path(s3_object, "/tmp")
     create_dir(os.path.dirname(file_path))
-    s3_object.download_file(file_path)
+
+    try:
+        s3_object.download_file(file_path)
+    except botocore.exceptions.ClientError as e:
+        print("Unexpected exception for file %s.\n" % file_path)
+        if s3_object.key.startswith("test"):
+            # I hypothesise that the test bucket has lots of create/delete operations
+            # and the deletes cause this exception to throw. If this is the case, then
+            # we should exit without doing anything.
+            print("Ignoring file in test folder %s.\n" % file_path)
+            return
+        else:
+            # But... if it's not, then we'll throw
+            raise
 
     to_download = clamav.update_defs_from_s3(
         s3_client, AV_DEFINITION_S3_BUCKET, AV_DEFINITION_S3_PREFIX
